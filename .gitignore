@@ -21,5 +21,8 @@ build/
 # Streamlit
 .streamlit/
 
+# Project
+AI_Gateway_Implementation_Plan.txt
+
 # OS
 Thumbs.db
