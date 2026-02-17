@@ -16,36 +16,18 @@ The result: **real cost savings** while maintaining response quality, with full 
 
 ## Architecture
 
-```
-User Prompt
-    │
-    ▼
-┌──────────────────┐
-│   Classifier      │  ← Rule-based (heuristics) or LLM-based (Claude Haiku)
-│   Score: 1-10     │
-│   Type: code/math/│
-│   creative/etc.   │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│   Router          │  ← Maps (complexity tier + task type) → optimal model
-│   Reasoning chain │
-│   Cost estimate   │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│   Provider        │  ← Real API calls to OpenAI / Anthropic
-│   (OpenAI /       │
-│    Anthropic)     │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐
-│   Response +      │  ← Cached, logged, and returned with full routing reasoning
-│   Analytics       │
-└──────────────────┘
+```mermaid
+flowchart TD
+    A["🔤 User Prompt"] --> B["🧠 Classifier\nRule-based heuristics or LLM-based (Claude Haiku)\nOutputs: complexity score (1-10) + task type"]
+    B --> C["🔀 Router\nMaps (complexity tier + task type) → optimal model\nGenerates reasoning chain + cost estimate"]
+    C --> D["⚡ Provider\nReal API calls to OpenAI / Anthropic\nGPT-4o · GPT-4o-mini · Claude 3.5 Sonnet"]
+    D --> E["📊 Response + Analytics\nCached, logged, and returned\nwith full routing reasoning + cost comparison"]
+
+    style A fill:#4A90D9,stroke:#2C5F8A,color:#fff
+    style B fill:#F5A623,stroke:#C47D0E,color:#fff
+    style C fill:#7B68EE,stroke:#5A4FCF,color:#fff
+    style D fill:#50C878,stroke:#2E8B57,color:#fff
+    style E fill:#FF6B6B,stroke:#CC4444,color:#fff
 ```
 
 ---
@@ -157,13 +139,30 @@ ai-gateway/
 
 ## Routing Logic
 
-| Complexity | Task Type | Model | Why |
-|---|---|---|---|
-| 1-3 (Low) | All types | GPT-4o-mini | Fast and cheap for simple tasks |
-| 4-6 (Medium) | Code, Math, General, Simple QA | GPT-4o-mini | Cost-effective for moderate tasks |
-| 4-6 (Medium) | Analysis, Creative, Translation, Reasoning | Claude 3.5 Sonnet | Strong at nuanced/creative work |
-| 7-10 (High) | Reasoning, Math, Code, Simple QA | GPT-4o | Top-tier for complex logic |
-| 7-10 (High) | Analysis, Creative, General, Translation | Claude 3.5 Sonnet | Best for long-form and nuanced content |
+```mermaid
+flowchart TD
+    A["Classify Prompt\nScore: 1-10"] --> B{Complexity Tier?}
+
+    B -->|"LOW (1-3)"| C["GPT-4o-mini\nFast & cheap for simple tasks"]
+
+    B -->|"MEDIUM (4-6)"| D{Task Type?}
+    D -->|"Code · Math\nGeneral · Simple QA"| E["GPT-4o-mini\nCost-effective for moderate tasks"]
+    D -->|"Analysis · Creative\nTranslation · Reasoning"| F["Claude 3.5 Sonnet\nStrong at nuanced/creative work"]
+
+    B -->|"HIGH (7-10)"| G{Task Type?}
+    G -->|"Reasoning · Math\nCode · Simple QA"| H["GPT-4o\nTop-tier for complex logic"]
+    G -->|"Analysis · Creative\nGeneral · Translation"| I["Claude 3.5 Sonnet\nBest for long-form & nuanced content"]
+
+    style A fill:#4A90D9,stroke:#2C5F8A,color:#fff
+    style B fill:#F5A623,stroke:#C47D0E,color:#fff
+    style C fill:#50C878,stroke:#2E8B57,color:#fff
+    style D fill:#F5A623,stroke:#C47D0E,color:#fff
+    style E fill:#50C878,stroke:#2E8B57,color:#fff
+    style F fill:#7B68EE,stroke:#5A4FCF,color:#fff
+    style G fill:#F5A623,stroke:#C47D0E,color:#fff
+    style H fill:#FF6B6B,stroke:#CC4444,color:#fff
+    style I fill:#7B68EE,stroke:#5A4FCF,color:#fff
+```
 
 ---
 
